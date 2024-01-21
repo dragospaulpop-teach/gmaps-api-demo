@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maps API Demo</title>
+  <style>
+    .my-marker {
+      font-size: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="map" style="height: 100vh; width: 100vw;"></div>
+  <script>
+    (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+      key: "your maps key here",
+      v: "weekly",
+    });
+  </script>
+  <script>
+    let map;
+    async function initMap() {
+      const { Map, InfoWindow } = await google.maps.importLibrary("maps");
+      const { Marker } = await google.maps.importLibrary("marker");
+      const { Size, Point, LatLngBounds } = await google.maps.importLibrary("core");
+      const markerSize = new Size(50, 50);
+      const markerOrigin = new Point(25, 60);
+
+      const dbCoords = [
+        {
+          coords: { lat: 44.42724, lng: 26.10273 },
+          price: 123.45,
+          currency: "RON",
+          details: "loc de parcare oferit de Cristina"
+        },
+        {
+          coords: { lat: 44.52767, lng: 26.29106 },
+          price: 31.56,
+          currency: "EUR",
+          details: "loc de parcare oferit de Alex"
+        }
+      ]
+
+      map = new Map(document.getElementById("map"), {
+        center: { lat: 44.42724, lng: 26.10273 },
+        zoom: 15,
+        mapId: "your map id here",
+        tilt: 45
+      });
+
+      const bounds = new LatLngBounds();
+      dbCoords.forEach(data => {
+        const marker = new Marker({
+          map,
+          position: data.coords,
+          label: {
+            text: `${data.price} ${data.currency}`,
+            className: "my-marker",
+            color: "black"
+          },
+          icon: {
+            url: "https://cdn-icons-png.flaticon.com/512/608/608690.png",
+            // anchor
+            labelOrigin: markerOrigin,
+            // origin: markerOrigin,
+            scaledSize: markerSize,
+            size: markerSize
+          },
+          animation: google.maps.Animation.DROP
+        });
+
+        bounds.extend(data.coords);
+
+        marker.addListener("click", () => {
+          const template = document.getElementById("info-window-template")
+          const clone = template.content.cloneNode(true);
+
+          const dataFromDB = "lorem ipsum dolor sit amet";
+
+          const html = clone
+            .querySelector(".content")
+            .innerHTML
+            .replace("content from database", data.details);
+
+          infoWindow.setContent(html);
+          infoWindow.open(map, marker);
+        })
+      });
+      map.fitBounds(bounds);
+
+      const infoWindow = new InfoWindow({
+        content: null
+      });
+    }
+    initMap();
+  </script>
+  <template id="info-window-template">
+    <div>
+      <h1>Info Window</h1>
+      <div class="content">
+        <p>Content</p>
+        <p class="fromdb">content from database</p>
+      </div>
+    </div>
+  </template>
+</body>
+</html>
